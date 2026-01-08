@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { checkHasKey, triggerKeySelection, testConnection } from '../services/apiKeyService';
-import { CloseIcon, KeyIcon, CheckIcon, SparklesIcon } from './icons';
+import { CloseIcon, CheckIcon, SparklesIcon } from './icons';
 
 interface ApiKeyModalProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'testing'>('idle');
   const [log, setLog] = useState<string>('');
-
+  
   useEffect(() => {
     if (isOpen) {
       refreshStatus();
@@ -31,9 +31,17 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
     }
   };
 
-  const handleInputAreaClick = async () => {
+  const handleInputAreaClick = async (e?: React.MouseEvent) => {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
     try {
+      // 시스템 보안 창 호출 (여기서 직접 타이핑하거나 프로젝트를 선택하게 됨)
       await triggerKeySelection();
+      
+      // 호출 후 즉시 상태 재확인
       const active = await checkHasKey();
       setHasKey(active);
       if (active) {
@@ -55,7 +63,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
     setLog('통신 엔진 테스트 중...');
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 시각적 피드백을 위해 약간의 지연 추가
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const result = await testConnection();
       
       if (result.success) {
@@ -104,16 +113,17 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
             Gemini API 키를 입력해주세요. 키는 당신의 브라우저에 암호화되어 안전하게 저장됩니다.
         </p>
 
-        {/* Mock Input Field (Styled like the screenshot) */}
+        {/* Screenshot Styled Input Area */}
         <div className="relative mb-6">
-            <div 
+            <button 
+                type="button"
                 onClick={handleInputAreaClick}
-                className={`w-full bg-[#2a3241] border-2 rounded-xl p-4 h-16 flex items-center cursor-text transition-all ${
-                    status === 'success' ? 'border-emerald-500/50' : 'border-[#6366f1]/50 hover:border-[#818cf8]'
+                className={`w-full bg-[#2a3241] border-2 rounded-xl p-4 h-16 flex items-center text-left transition-all outline-none ${
+                    status === 'success' ? 'border-emerald-500/50' : 'border-[#6d28d9] hover:border-[#7c3aed]'
                 }`}
             >
-                <div className="w-0.5 h-6 bg-indigo-400 animate-pulse mr-2"></div>
-                <span className={`text-sm font-medium ${hasKey ? 'text-indigo-200' : 'text-slate-500'}`}>
+                <div className="w-0.5 h-6 bg-indigo-400 animate-pulse mr-3 shrink-0"></div>
+                <span className={`text-sm font-medium truncate ${hasKey ? 'text-indigo-200' : 'text-slate-500'}`}>
                     {hasKey ? '••••••••••••••••••••••••••••' : 'AlzaSy... 키를 여기에 붙여넣으세요'}
                 </span>
                 
@@ -122,10 +132,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
                         <CheckIcon className="w-5 h-5 text-emerald-500" />
                     </div>
                 )}
-            </div>
+            </button>
             {hasKey && status !== 'success' && (
                 <p className="absolute -bottom-6 left-1 text-[10px] text-indigo-400 font-bold animate-pulse">
-                    키가 감지되었습니다. 아래 버튼을 눌러 활성화하세요.
+                    키가 감지되었습니다. 아래 버튼을 눌러 연동을 확인하세요.
                 </p>
             )}
         </div>
@@ -133,7 +143,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
         {/* Log Display */}
         {log && (
             <div className="mb-6 px-1">
-                <p className={`text-xs font-bold ${
+                <p className={`text-xs font-bold leading-tight ${
                     status === 'error' ? 'text-rose-400' : status === 'success' ? 'text-emerald-400' : 'text-slate-400'
                 }`}>
                     {log}
@@ -141,7 +151,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
             </div>
         )}
 
-        {/* Actions */}
+        {/* Actions - Manual Activation Button */}
         <div className="flex flex-col gap-3 mt-4">
             {status === 'success' ? (
                 <button
@@ -166,7 +176,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
             )}
             
             <p className="text-[10px] text-slate-600 text-center mt-4 uppercase tracking-widest font-black opacity-50">
-                Secure API Management v2.0
+                Manual Key Control v3.0
             </p>
         </div>
       </div>

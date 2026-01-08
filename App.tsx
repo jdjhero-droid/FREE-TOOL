@@ -23,7 +23,7 @@ import { NanoBananaGeneratorTool } from './components/NanoBananaGeneratorTool';
 import { DEFAULT_THEME, THEMES } from './components/themes';
 import type { Theme } from './components/themes';
 import { editImageWithNanoBanana } from './services/geminiService';
-import { checkHasKey, testConnection } from './services/apiKeyService';
+import { checkHasKey } from './services/apiKeyService';
 import { KeyIcon } from './components/icons';
 import { ApiKeyModal } from './components/ApiKeyModal';
 
@@ -104,17 +104,10 @@ function App() {
     }
   }, [theme]);
 
-  // Initial Security Check
+  // Initial Security Check - Now requires user action to activate
   useEffect(() => {
     const initSecurity = async () => {
-      const hasKey = await checkHasKey();
-      if (hasKey) {
-          // 키가 저장되어 있다면 자동으로 통신 테스트를 수행하여 활성화 여부 결정
-          const result = await testConnection();
-          setIsAppActive(result.success);
-      } else {
-          setIsAppActive(false);
-      }
+      // 키가 있더라도 자동으로 활성화하지 않음 (사용자가 직접 시작 버튼을 눌러야 함)
       setIsCheckingKey(false);
     };
     initSecurity();
@@ -489,9 +482,11 @@ function App() {
               <div className="w-28 h-28 bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-[0_20px_50px_rgba(99,102,241,0.5)] transform hover:rotate-6 transition-transform duration-500">
                   <span className="text-white text-5xl font-black drop-shadow-2xl">🦁</span>
               </div>
-              <h1 className="text-4xl font-black mb-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-gray-500">
-                AI Creative Studio Pro
+              <h1 className="text-4xl font-black mb-1 tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-gray-500">
+                Wild Teacher’s
               </h1>
+              <p className="text-indigo-400 font-extrabold tracking-[0.2em] uppercase text-sm mb-10">AI & Utility Tools</p>
+              
               <p className="text-slate-400 mb-12 leading-relaxed font-medium text-lg px-4">
                 시스템이 잠겨있습니다. 계속하려면 <br/> 
                 <span className="text-indigo-400 font-bold underline underline-offset-4">보안 API 키를 입력하고 활성화</span> 하세요.
