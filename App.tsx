@@ -23,7 +23,7 @@ import { NanoBananaGeneratorTool } from './components/NanoBananaGeneratorTool';
 import { DEFAULT_THEME, THEMES } from './components/themes';
 import type { Theme } from './components/themes';
 import { editImageWithNanoBanana } from './services/geminiService';
-import { checkHasKey } from './services/apiKeyService';
+import { checkHasKey, testConnection } from './services/apiKeyService';
 import { KeyIcon } from './components/icons';
 import { ApiKeyModal } from './components/ApiKeyModal';
 
@@ -104,10 +104,16 @@ function App() {
     }
   }, [theme]);
 
-  // Initial Security Check - Now requires user action to activate
+  // Initial Security Check
   useEffect(() => {
     const initSecurity = async () => {
-      // 키가 있더라도 자동으로 활성화하지 않음 (사용자가 직접 시작 버튼을 눌러야 함)
+      const hasKey = await checkHasKey();
+      if (hasKey) {
+          const result = await testConnection();
+          setIsAppActive(result.success);
+      } else {
+          setIsAppActive(false);
+      }
       setIsCheckingKey(false);
     };
     initSecurity();
@@ -469,12 +475,10 @@ function App() {
     }
   };
 
-  // 활성화되지 않은 경우 보안 게이트웨이만 렌더링
   if (!isAppActive && !isCheckingKey) {
     return (
       <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/95 backdrop-blur-3xl overflow-hidden">
         <div className="bg-[#0a0e1a]/95 p-16 rounded-[4rem] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.9)] max-w-xl w-full text-center border border-white/10 relative overflow-hidden animate-fade-in">
-           {/* Background Effects */}
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse" style={{ animationDelay: '1s' }}></div>
           
@@ -525,7 +529,6 @@ function App() {
     );
   }
 
-  // 로딩 중일 때 표시 (깜빡임 방지)
   if (isCheckingKey) {
       return (
           <div className="h-screen w-screen bg-[#0a0f1e] flex items-center justify-center">
@@ -536,7 +539,6 @@ function App() {
 
   return (
     <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans overflow-hidden">
-      {/* Main UI Components */}
       <Sidebar 
         activeToolId={activeToolId} 
         setActiveToolId={setActiveToolId} 
