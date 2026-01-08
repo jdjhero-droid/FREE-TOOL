@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Creative Studio Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0"
+  }
+}
+</script>
+<style id="app-theme">
+      :root {
+        --bg-primary: #0a0f1e;
+        --bg-secondary: #12182b;
+        --bg-tertiary: #1e293b;
+        --bg-interactive: #334155;
+        --bg-accent: #6366f1;
+        --bg-accent-hover: #4f46e5;
+        --bg-positive: #10b981;
+        --bg-positive-hover: #059669;
+        --bg-negative: #f43f5e;
+        --bg-negative-hover: #e11d48;
+        --bg-info: #0ea5e9;
+        --bg-info-hover: #0284c7;
+        --bg-disabled: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-accent: #818cf8;
+        --text-on-accent: #ffffff;
+        --border-primary: #1e293b;
+        --border-secondary: #334155;
+        --border-accent: #6366f1;
+        --ring-accent: #818cf8;
+      }
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
+
+      /* Custom scrollbar for premium feel */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--bg-accent);
+      }
+    </style>
+</head>
+  <body class="selection:bg-indigo-500 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
