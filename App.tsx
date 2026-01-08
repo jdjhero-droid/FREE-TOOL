@@ -25,6 +25,7 @@ import type { Theme } from './components/themes';
 import { editImageWithNanoBanana } from './services/geminiService';
 import { checkHasKey, triggerKeySelection } from './services/apiKeyService';
 import { SparklesIcon, KeyIcon } from './components/icons';
+import { ApiKeyModal } from './components/ApiKeyModal';
 
 
 // saveAs is loaded from a script in index.html
@@ -69,6 +70,7 @@ function App() {
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [isAppActive, setIsAppActive] = useState(false);
   const [isCheckingKey, setIsCheckingKey] = useState(true);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // State for FinalSheetTool lifted up
   const [sheetFormat, setSheetFormat] = useState<SheetFormat>('landscape');
@@ -473,11 +475,11 @@ function App() {
 
   return (
     <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans overflow-hidden">
-      {/* Initialization Overlay (Gate) */}
+      {/* Security Gateway (Gate) - Only shown if no key is present */}
       {(!isAppActive && !isCheckingKey) && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/80 backdrop-blur-3xl">
-          <div className="bg-[#0a0e1a]/90 p-16 rounded-[4rem] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.8)] max-w-xl w-full text-center border border-white/10 relative overflow-hidden animate-fade-in">
-             {/* Background Glow */}
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 backdrop-blur-3xl">
+          <div className="bg-[#0a0e1a]/95 p-16 rounded-[4rem] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.9)] max-w-xl w-full text-center border border-white/10 relative overflow-hidden animate-fade-in">
+             {/* Background Effects */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse" style={{ animationDelay: '1s' }}></div>
             
@@ -489,8 +491,8 @@ function App() {
                   AI Creative Studio Pro
                 </h1>
                 <p className="text-slate-400 mb-12 leading-relaxed font-medium text-lg">
-                  최고의 AI 창작 환경에 오신 것을 환영합니다.<br/>
-                  <span className="text-indigo-400 font-bold">외장형 API 키</span>를 활성화하여 시스템을 시작하세요.
+                  시스템 보안이 활성화되었습니다.<br/>
+                  계속하려면 <span className="text-indigo-400 font-bold">API 키를 입력(선택)</span>하여 인증을 완료하세요.
                 </p>
                 
                 <div className="space-y-4">
@@ -499,7 +501,7 @@ function App() {
                       className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-6 px-10 rounded-3xl transition-all transform hover:scale-[1.03] active:scale-[0.97] shadow-[0_25px_50px_-12px_rgba(79,70,229,0.5)] flex items-center justify-center gap-4 text-xl group"
                     >
                       <KeyIcon className="w-7 h-7 transition-transform group-hover:rotate-12" />
-                      <span>지금 API 키 활성화하기</span>
+                      <span>인증 및 시작하기</span>
                     </button>
                     
                     <a 
@@ -508,25 +510,26 @@ function App() {
                         rel="noopener noreferrer"
                         className="inline-block text-[11px] text-slate-500 hover:text-indigo-400 font-black uppercase tracking-[0.2em] transition-colors mt-4"
                     >
-                        Learn about external API keys ➜
+                        Learn about security & API keys ➜
                     </a>
                 </div>
 
                 <p className="mt-12 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black opacity-60">
-                  Secure Professional Integration
+                  Secure Access Mandatory
                 </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Main UI Components - only accessible if isAppActive is true */}
+      {/* Main UI Components - only fully functional if isAppActive is true */}
       <Sidebar 
         activeToolId={activeToolId} 
         setActiveToolId={setActiveToolId} 
         themes={THEMES}
         activeTheme={theme}
         setTheme={setTheme}
+        onOpenSettings={() => setShowSettingsModal(true)}
       />
       <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-gradient-to-br from-[#0a0f1e] to-[#12182b] relative">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent opacity-50"></div>
@@ -550,6 +553,7 @@ function App() {
         historyLength={history.length}
         onEdit={handleEditInModal}
       />
+      <ApiKeyModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
     </div>
   );
 }

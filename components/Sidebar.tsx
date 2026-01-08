@@ -3,7 +3,6 @@ import { TOOLS } from '../constants';
 import type { ToolId } from '../types';
 import type { Theme } from './themes';
 import { ChatBubbleOvalLeftIcon, KeyIcon } from './icons';
-import { ApiKeyModal } from './ApiKeyModal';
 
 interface SidebarProps {
   activeToolId: ToolId;
@@ -11,11 +10,10 @@ interface SidebarProps {
   themes: Theme[];
   activeTheme: Theme;
   setTheme: (theme: Theme) => void;
+  onOpenSettings: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeToolId, setActiveToolId, themes, activeTheme, setTheme }) => {
-  const [showApiModal, setShowApiModal] = useState(false);
-
+export const Sidebar: React.FC<SidebarProps> = ({ activeToolId, setActiveToolId, themes, activeTheme, setTheme, onOpenSettings }) => {
   return (
     <aside className="w-72 bg-[#0a0e1a]/95 backdrop-blur-xl flex flex-col border-r border-white/10 shadow-[20px_0_40px_-15px_rgba(0,0,0,0.7)] z-30">
       <div className="p-8 mb-4">
@@ -62,11 +60,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeToolId, setActiveToolId,
 
       <div className="p-6 mt-4 border-t border-white/5 bg-black/40 backdrop-blur-2xl">
          <button
-            onClick={() => setShowApiModal(true)}
-            className="flex items-center justify-center gap-3 w-full bg-slate-800/50 hover:bg-slate-700/80 text-slate-200 p-4 rounded-2xl mb-6 transition-all transform hover:scale-[1.02] active:scale-95 text-xs font-black border border-white/10 shadow-lg"
+            onClick={onOpenSettings}
+            className="flex items-center justify-between w-full bg-gradient-to-r from-indigo-600/20 to-purple-600/20 hover:from-indigo-600/40 hover:to-purple-600/40 text-white p-4 rounded-2xl mb-6 transition-all transform hover:scale-[1.02] active:scale-95 border border-white/10 shadow-lg group"
          >
-            <KeyIcon className="w-5 h-5" />
-            <span>API 키 설정</span>
+            <div className="flex items-center gap-3">
+                <div className="bg-indigo-500/20 p-2 rounded-xl text-indigo-400 group-hover:scale-110 transition-transform">
+                    <KeyIcon className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                    <p className="text-[11px] font-black uppercase tracking-widest leading-none">Security Center</p>
+                    <p className="text-[9px] text-slate-400 font-bold mt-1">API & Integration</p>
+                </div>
+            </div>
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
          </button>
 
          <div className="space-y-4">
@@ -84,7 +90,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeToolId, setActiveToolId,
              </a>
          </div>
       </div>
-      <ApiKeyModal isOpen={showApiModal} onClose={() => setShowApiModal(false)} />
     </aside>
   );
 };
