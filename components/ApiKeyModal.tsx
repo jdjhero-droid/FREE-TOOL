@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { triggerKeySelection, testConnection } from '../services/apiKeyService';
+import { testConnection } from '../services/apiKeyService';
 import { CloseIcon, CheckIcon, SparklesIcon } from './icons';
 
 interface ApiKeyModalProps {
@@ -9,7 +9,8 @@ interface ApiKeyModalProps {
 }
 
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onActivated }) => {
-  const [inputValue, setInputValue] = useState('');
+  // 초기값으로 로컬 저장소의 키를 가져옵니다.
+  const [inputValue, setInputValue] = useState(() => localStorage.getItem('WILD_TEACHER_API_KEY') || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'testing'>('idle');
   const [log, setLog] = useState<string>('');
@@ -17,10 +18,9 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
   
   useEffect(() => {
     if (isOpen) {
-      setInputValue('');
       setStatus('idle');
       setLog('');
-      // 모달이 열리면 즉시 입력 가능하도록 포커스
+      // 모달이 열리면 입력창에 포커스하여 즉시 입력 가능하게 함
       setTimeout(() => {
         if (inputRef.current) inputRef.current.focus();
       }, 200);
@@ -28,36 +28,33 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
   }, [isOpen]);
 
   const handleSaveAndTest = async () => {
-    // 1. 입력값이 비어있는지 확인
     const trimmedKey = inputValue.trim();
     
+    if (!trimmedKey) {
+        setStatus('error');
+        setLog('키를 입력해주세요.');
+        return;
+    }
+
     setIsProcessing(true);
     setStatus('testing');
-    setLog('입력하신 키로 통신 엔진을 테스트 중입니다...');
+    setLog('AI 엔진에 라이선스 키를 등록 중입니다...');
     
     try {
-      // 2. 입력된 키로 직접 테스트 시도 (이게 가장 확실함)
-      let result = await testConnection(trimmedKey);
-      
-      // 3. 만약 직접 입력으로 실패했는데, 시스템 창을 띄워야 할 상황이라면 보조적으로 호출
-      if (!result.success && !trimmedKey) {
-        setLog('시스템 보안 창에서 키를 선택해주세요...');
-        await triggerKeySelection();
-        // 시스템 창이 닫힌 후 잠시 대기
-        await new Promise(r => setTimeout(r, 1000));
-        result = await testConnection(); // 이번엔 시스템 변수로 재시도
-      }
+      // 1. 입력된 키로 직접 통신 테스트 수행 (성공 시 내부적으로 전역 키로 등록됨)
+      const result = await testConnection(trimmedKey);
       
       if (result.success) {
         setStatus('success');
         setLog(result.message);
+        // 약간의 지연 후 메인으로 진입하도록 유도하거나 자동 진입
       } else {
         setStatus('error');
         setLog(result.message);
       }
     } catch (e: any) {
       setStatus('error');
-      setLog('연동 중 예상치 못한 오류가 발생했습니다.');
+      setLog('연동 중 예외가 발생했습니다. 키를 다시 확인해주세요.');
     } finally {
       setIsProcessing(false);
     }
@@ -92,13 +89,13 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
         {/* Description */}
         <p className="text-sm text-slate-400 leading-relaxed mb-10 font-medium">
             Gemini API 키를 입력해주세요. <br/>
-            키는 브라우저 보안 세션 내에서만 안전하게 사용됩니다.
+            한 번 등록된 키는 브라우저에 안전하게 보관되어 즉시 사용 가능합니다.
         </p>
 
-        {/* Real Input Field */}
+        {/* Actual Input Field - 텍스트 입력 오류 완벽 수정 */}
         <div className="relative mb-8 group">
             <div className={`w-full bg-[#242938] border-2 rounded-2xl transition-all ${
-                status === 'success' ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 
+                status === 'success' ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 
                 status === 'error' ? 'border-rose-500' :
                 'border-[#6d28d9] group-hover:border-[#8b5cf6]'
             }`}>
@@ -108,8 +105,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveAndTest()}
-                    placeholder="AlzaSy... 키를 여기에 붙여넣으세요"
+                    placeholder="AlzaSy... 키를 여기에 입력하세요"
                     className="w-full bg-transparent border-none outline-none py-5 px-6 text-white text-base font-medium placeholder-slate-600"
+                    spellCheck={false}
+                    autoComplete="off"
                 />
             </div>
             
@@ -158,7 +157,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
             )}
             
             <p className="text-[10px] text-slate-700 text-center mt-6 uppercase tracking-[0.3em] font-black opacity-40">
-                MANUAL KEY CONTROL V3.1
+                MANUAL KEY CONTROL V3.2
             </p>
         </div>
       </div>
@@ -171,12 +170,12 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
         .animate-zoom-in {
           animation: zoom-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
         @keyframes fade-in {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out forwards;
         }
       `}</style>
     </div>
