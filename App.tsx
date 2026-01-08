@@ -23,10 +23,9 @@ import { NanoBananaGeneratorTool } from './components/NanoBananaGeneratorTool';
 import { DEFAULT_THEME, THEMES } from './components/themes';
 import type { Theme } from './components/themes';
 import { editImageWithNanoBanana } from './services/geminiService';
-import { checkHasKey, triggerKeySelection } from './services/apiKeyService';
-import { SparklesIcon, KeyIcon } from './components/icons';
+import { checkHasKey, testConnection } from './services/apiKeyService';
+import { KeyIcon } from './components/icons';
 import { ApiKeyModal } from './components/ApiKeyModal';
-
 
 // saveAs is loaded from a script in index.html
 declare const saveAs: any;
@@ -109,18 +108,22 @@ function App() {
   useEffect(() => {
     const initSecurity = async () => {
       const hasKey = await checkHasKey();
-      setIsAppActive(hasKey);
+      if (hasKey) {
+          // 키가 저장되어 있다면 자동으로 통신 테스트를 수행하여 활성화 여부 결정
+          const result = await testConnection();
+          setIsAppActive(result.success);
+      } else {
+          setIsAppActive(false);
+      }
       setIsCheckingKey(false);
     };
     initSecurity();
   }, []);
 
-  const handleActivate = async () => {
-    await triggerKeySelection();
-    // 가이드라인에 따라 키 선택 창을 호출한 후에는 즉시 성공한 것으로 간주하고 앱 진입
+  const handleActivationComplete = () => {
     setIsAppActive(true);
+    setShowSettingsModal(false);
   };
-
 
   const addToHistory = useCallback((image: GeneratedImage) => {
     setHistory(prev => [image, ...prev]);
@@ -473,56 +476,72 @@ function App() {
     }
   };
 
-  return (
-    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans overflow-hidden">
-      {/* Security Gateway (Gate) - Only shown if no key is present */}
-      {(!isAppActive && !isCheckingKey) && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 backdrop-blur-3xl">
-          <div className="bg-[#0a0e1a]/95 p-16 rounded-[4rem] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.9)] max-w-xl w-full text-center border border-white/10 relative overflow-hidden animate-fade-in">
-             {/* Background Effects */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse" style={{ animationDelay: '1s' }}></div>
-            
-            <div className="relative z-10">
-                <div className="w-28 h-28 bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-[0_20px_50px_rgba(99,102,241,0.5)] transform hover:rotate-6 transition-transform duration-500">
-                    <span className="text-white text-5xl font-black drop-shadow-2xl">🦁</span>
-                </div>
-                <h1 className="text-4xl font-black mb-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-gray-500">
-                  AI Creative Studio Pro
-                </h1>
-                <p className="text-slate-400 mb-12 leading-relaxed font-medium text-lg">
-                  시스템 보안이 활성화되었습니다.<br/>
-                  계속하려면 <span className="text-indigo-400 font-bold">API 키를 입력(선택)</span>하여 인증을 완료하세요.
-                </p>
-                
-                <div className="space-y-4">
-                    <button 
-                      onClick={handleActivate}
-                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-6 px-10 rounded-3xl transition-all transform hover:scale-[1.03] active:scale-[0.97] shadow-[0_25px_50px_-12px_rgba(79,70,229,0.5)] flex items-center justify-center gap-4 text-xl group"
-                    >
-                      <KeyIcon className="w-7 h-7 transition-transform group-hover:rotate-12" />
-                      <span>인증 및 시작하기</span>
-                    </button>
-                    
-                    <a 
-                        href="https://ai.google.dev/gemini-api/docs/billing" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-block text-[11px] text-slate-500 hover:text-indigo-400 font-black uppercase tracking-[0.2em] transition-colors mt-4"
-                    >
-                        Learn about security & API keys ➜
-                    </a>
-                </div>
+  // 활성화되지 않은 경우 보안 게이트웨이만 렌더링
+  if (!isAppActive && !isCheckingKey) {
+    return (
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/95 backdrop-blur-3xl overflow-hidden">
+        <div className="bg-[#0a0e1a]/95 p-16 rounded-[4rem] shadow-[0_60px_100px_-20px_rgba(0,0,0,0.9)] max-w-xl w-full text-center border border-white/10 relative overflow-hidden animate-fade-in">
+           {/* Background Effects */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse"></div>
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-600/20 blur-[100px] rounded-full pointer-events-none animate-pulse" style={{ animationDelay: '1s' }}></div>
+          
+          <div className="relative z-10">
+              <div className="w-28 h-28 bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-[0_20px_50px_rgba(99,102,241,0.5)] transform hover:rotate-6 transition-transform duration-500">
+                  <span className="text-white text-5xl font-black drop-shadow-2xl">🦁</span>
+              </div>
+              <h1 className="text-4xl font-black mb-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-gray-500">
+                AI Creative Studio Pro
+              </h1>
+              <p className="text-slate-400 mb-12 leading-relaxed font-medium text-lg px-4">
+                시스템이 잠겨있습니다. 계속하려면 <br/> 
+                <span className="text-indigo-400 font-bold underline underline-offset-4">보안 API 키를 입력하고 활성화</span> 하세요.
+              </p>
+              
+              <div className="space-y-4">
+                  <button 
+                    onClick={() => setShowSettingsModal(true)}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-6 px-10 rounded-3xl transition-all transform hover:scale-[1.03] active:scale-[0.97] shadow-[0_25px_50px_-12px_rgba(79,70,229,0.5)] flex items-center justify-center gap-4 text-xl group"
+                  >
+                    <KeyIcon className="w-7 h-7 transition-transform group-hover:rotate-12" />
+                    <span>API 키 입력 및 엔진 가동</span>
+                  </button>
+                  
+                  <a 
+                      href="https://ai.google.dev/gemini-api/docs/billing" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-block text-[11px] text-slate-500 hover:text-indigo-400 font-black uppercase tracking-[0.2em] transition-colors mt-4"
+                  >
+                      Learn about API security ➜
+                  </a>
+              </div>
 
-                <p className="mt-12 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black opacity-60">
-                  Secure Access Mandatory
-                </p>
-            </div>
+              <p className="mt-12 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black opacity-60">
+                Secure Access Mandatory
+              </p>
           </div>
         </div>
-      )}
+        <ApiKeyModal 
+            isOpen={showSettingsModal} 
+            onClose={() => setShowSettingsModal(false)} 
+            onActivated={handleActivationComplete}
+        />
+      </div>
+    );
+  }
 
-      {/* Main UI Components - only fully functional if isAppActive is true */}
+  // 로딩 중일 때 표시 (깜빡임 방지)
+  if (isCheckingKey) {
+      return (
+          <div className="h-screen w-screen bg-[#0a0f1e] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+          </div>
+      );
+  }
+
+  return (
+    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans overflow-hidden">
+      {/* Main UI Components */}
       <Sidebar 
         activeToolId={activeToolId} 
         setActiveToolId={setActiveToolId} 
@@ -553,7 +572,11 @@ function App() {
         historyLength={history.length}
         onEdit={handleEditInModal}
       />
-      <ApiKeyModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
+      <ApiKeyModal 
+        isOpen={showSettingsModal} 
+        onClose={() => setShowSettingsModal(false)} 
+        onActivated={handleActivationComplete}
+      />
     </div>
   );
 }
