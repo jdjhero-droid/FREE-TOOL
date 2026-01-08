@@ -20,38 +20,38 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
       setInputValue('');
       setStatus('idle');
       setLog('');
-      // 모달이 열리면 입력창에 포커스
-      setTimeout(() => inputRef.current?.focus(), 100);
+      // 모달이 열리면 입력창에 포커스하여 즉시 입력 가능하게 함
+      setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [isOpen]);
 
   const handleSaveAndTest = async () => {
-    // 1. 시스템에 키가 연동되어 있는지 확인
-    const hasKeyInitially = await checkHasKey();
-    
-    // 2. 만약 입력된 값이 있다면 (또는 없어도 시스템 창 호출 시도)
+    // 1. 시각적 피드백 시작
     setIsProcessing(true);
     setStatus('testing');
-    setLog('시스템 보안 모듈을 호출하여 키를 동기화 중...');
+    setLog('시스템 보안 모듈을 호출하여 키를 확인 중입니다...');
     
     try {
-      // 시스템 보안 창 호출 (타이핑한 키를 시스템에 심는 과정)
+      // 2. 플랫폼의 보안 키 선택창 호출
+      // 이 과정에서 사용자가 직접 키를 선택하거나 프로젝트를 고르게 됨
       await triggerKeySelection();
       
-      // 약간의 지연 후 테스트 수행
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 3. 키 선택 창이 닫힌 후 (성공했다고 가정하고) 잠시 대기하여 env 주입 대기
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 4. 실제 통신 테스트 수행
       const result = await testConnection();
       
       if (result.success) {
         setStatus('success');
-        setLog('연동 성공! 엔진이 정상적으로 가동되었습니다.');
+        setLog('연동 성공! 모든 AI 엔진이 정상적으로 가동되었습니다.');
       } else {
         setStatus('error');
-        setLog(`연동 실패: ${result.message}`);
+        setLog(result.message);
       }
-    } catch (e) {
+    } catch (e: any) {
       setStatus('error');
-      setLog('연동 도중 예외가 발생했습니다. 다시 시도해 주세요.');
+      setLog(`오류 발생: ${e.message || '알 수 없는 시스템 오류'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -85,10 +85,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onAct
 
         {/* Description */}
         <p className="text-sm text-slate-400 leading-relaxed mb-10 font-medium">
-            Gemini API 키를 입력해주세요. 키는 당신의 브라우저에 암호화되어 안전하게 저장됩니다.
+            Gemini API 키를 입력해주세요. 키는 브라우저 보안 환경에 암호화되어 안전하게 관리됩니다.
         </p>
 
-        {/* Real Input Field (Matching the screenshot) */}
+        {/* Real Input Field (Matching the user's design) */}
         <div className="relative mb-8 group">
             <div className={`w-full bg-[#242938] border-2 rounded-2xl transition-all ${
                 status === 'success' ? 'border-emerald-500' : 'border-[#6d28d9] group-hover:border-[#8b5cf6]'
